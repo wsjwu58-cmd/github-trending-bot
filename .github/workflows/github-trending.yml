@@ -14,20 +14,20 @@ jobs:
       - name: 抓取近 7 天高 Star 仓库
         id: fetch
         run: |
-          SINCE=$(date -d '7 days ago' --utc +%Y-%m-%d)
+          SINCE=$(date -d '7 days ago' -u +%Y-%m-%d)
 
           REPOS=$(gh search repos "created:>=$SINCE archived:false" \
             --sort stars \
             --order desc \
             --limit 10 \
-            --json fullName,url,description,stargazersCount,language,topics \
+            --json fullName,url,description,stargazersCount,language,forksCount \
             --jq '[.[] | {
               fullName: .fullName,
               url: .url,
               desc: (.description // "无描述")[0:80],
               stars: .stargazersCount,
               lang: (.language // "未知"),
-              topics: (.topics | join("、") // "")
+              forks: .forksCount
             }]')
 
           echo "repos_json<<EOF" >> $GITHUB_OUTPUT
@@ -55,7 +55,7 @@ jobs:
           . as $data |
           ([range(0; ($data | length))] | map(
             "**" + ((. + 1) | tostring) + ".** [" + $data[.].fullName + "](" + $data[.].url + ")  \n" +
-            "　　⭐ " + ($data[.].stars | tostring) + " 　|　 🖥 " + $data[.].lang + " 　|　 🔖 " + $data[.].topics + "  \n" +
+            "　　⭐ " + ($data[.].stars | tostring) + " 　|　 🖥 " + $data[.].lang + " 　|　 🔀 Fork " + ($data[.].forks | tostring) + "  \n" +
             "　　" + $data[.].desc + "\n"
           )) | .[]
           ' >> message.txt
